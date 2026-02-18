@@ -13,18 +13,19 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with AutomaticKeepAliveClientMixin<Home> {
   int currentPage = 0;
   final PageController controller = PageController();
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       body: PageView(
         controller: controller,
         children: [
-          MyFeedPage(),
+          MyFeedPage(pageController: controller),
           MySearchPage(),
-          MyUploadPage(),
+          MyUploadPage(pageController: controller),
           MyLikesPage(),
           MyProfilePage(),
         ],
@@ -40,9 +41,7 @@ class _HomeState extends State<Home> {
         onTap: (value) {
           setState(() {
             currentPage = value;
-            controller.jumpToPage(
-              value,
-            );
+            controller.jumpToPage(value);
           });
         },
         showSelectedLabels: false,
@@ -62,4 +61,7 @@ class _HomeState extends State<Home> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

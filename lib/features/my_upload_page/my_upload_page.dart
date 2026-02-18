@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:instagram_clone/theme/colors/colors.dart';
 
 class MyUploadPage extends StatefulWidget {
-  const MyUploadPage({super.key});
+  final PageController pageController;
+  const MyUploadPage({super.key, required this.pageController});
 
   @override
   State<MyUploadPage> createState() => _MyUploadPageState();
@@ -41,27 +42,35 @@ class _MyUploadPageState extends State<MyUploadPage> {
 
   void showPicker(BuildContext context) {
     showModalBottomSheet(
+      showDragHandle: true,
       context: context,
       builder: (context) {
         return SafeArea(
           child: Wrap(
             children: [
-              ListTile(
-                leading: Icon(Icons.image),
-                title: Text("Pick Photo"),
-                onTap: () {
-                  _pickFromGallery();
-                  Navigator.pop(context);
-                },
+              Card(
+                color: AppColors.primaryFirst,
+                child: ListTile(
+                  leading: Icon(Icons.image, color: Color(0xFFF56040)),
+                  title: Text("Pick Photo"),
+                  onTap: () {
+                    _pickFromGallery();
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-              ListTile(
-                leading: Icon(Icons.camera),
-                title: Text("Take Photo"),
-                onTap: () {
-                  _pickFromCamera();
-                  Navigator.pop(context);
-                },
+              Card(
+                color: AppColors.primarySecond,
+                child: ListTile(
+                  leading: Icon(Icons.camera, color: Color(0xFFFCAF45)),
+                  title: Text("Take Photo"),
+                  onTap: () {
+                    _pickFromCamera();
+                    Navigator.pop(context);
+                  },
+                ),
               ),
+              SizedBox(height: 10, width: double.infinity),
             ],
           ),
         );
@@ -73,14 +82,17 @@ class _MyUploadPageState extends State<MyUploadPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
         centerTitle: true,
         title: Text(
           "Upload",
-          style: TextStyle(fontSize: 28, fontFamily: "Billabong"),
+          style: TextStyle(fontSize: 30, fontFamily: "Billabong"),
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              widget.pageController.jumpToPage(0);
+            },
             icon: Icon(
               Icons.drive_folder_upload,
               color: AppColors.primarySecond,
@@ -119,13 +131,13 @@ class _MyUploadPageState extends State<MyUploadPage> {
               margin: EdgeInsets.only(left: 10, right: 10, top: 10),
               child: TextField(
                 controller: captionController,
-                style: TextStyle(color: Colors.black),
                 keyboardType: TextInputType.multiline,
                 minLines: 1,
                 maxLines: 5,
                 decoration: InputDecoration(
+                  focusColor: AppColors.primarySecond,
                   hintText: "Caption",
-                  hintStyle: TextStyle(fontSize: 17, color: Colors.black38),
+                  hintStyle: TextStyle(fontSize: 17),
                 ),
               ),
             ),
