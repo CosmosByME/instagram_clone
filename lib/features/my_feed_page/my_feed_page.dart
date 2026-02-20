@@ -79,118 +79,112 @@ class _ItemOfPostState extends State<ItemOfPost> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        children: [
-          Divider(color: Colors.grey.shade100),
-          //#user info
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(40),
-                      child: post.img_user.isEmpty
-                          ? Image(
-                              image: AssetImage("assets/images/ic_person.png"),
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.network(
-                              post.img_user,
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.cover,
-                            ),
-                    ),
-                    SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          post.fullname,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            
-                          ),
-                        ),
-                        SizedBox(height: 3),
-                        Text(
-                          post.date,
-                          style: TextStyle(
-                            fontWeight: FontWeight.normal,
-                            
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                post.mine
-                    ? IconButton(icon: Icon(Icons.more_horiz), onPressed: () {})
-                    : SizedBox.shrink(),
-              ],
-            ),
-          ),
-          //#post image
-          SizedBox(height: 8),
-          CachedNetworkImage(
-            width: MediaQuery.of(context).size.width,
-            imageUrl: post.img_post,
-            placeholder: (context, url) =>
-                Center(child: CircularProgressIndicator()),
-            errorWidget: (context, url, error) => Icon(Icons.error),
-            fit: BoxFit.cover,
-          ),
-
-          //#like share
-          Row(
+    return Column(
+      children: [
+        Divider(color: Colors.grey.shade100),
+        //#user info
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  IconButton(
-                    onPressed: () {
-                      if (!post.liked) {
-                        setState(() {
-                          post.liked = !post.liked;
-                        });
-                      } else {
-                        setState(() {
-                          post.liked = !post.liked;
-                        });
-                      }
-                    },
-                    icon: post.liked
-                        ? Icon(EvaIcons.heart, color: Colors.red)
-                        : Icon(EvaIcons.heartOutline,),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(40),
+                    child: post.img_user.isEmpty
+                        ? Image(
+                            image: AssetImage("assets/images/ic_person.png"),
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            post.img_user,
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                          ),
                   ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(EvaIcons.shareOutline),
+                  SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post.fullname,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        post.date,
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
                   ),
                 ],
               ),
+              post.mine
+                  ? IconButton(icon: Icon(Icons.more_horiz), onPressed: () {})
+                  : SizedBox.shrink(),
             ],
           ),
+        ),
+        //#post image
+        SizedBox(height: 8),
+        CachedNetworkImage(
+          width: MediaQuery.of(context).size.width,
+          imageUrl: post.img_post,
+          placeholder: (context, url) =>
+              Center(child: CircularProgressIndicator()),
+          errorWidget: (context, url, error) => Icon(Icons.error),
+          fit: BoxFit.cover,
+        ),
 
-          //#caption
-          Container(
-            width: MediaQuery.of(context).size.width,
-            margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
-            child: RichText(
-              softWrap: true,
-              overflow: TextOverflow.visible,
-              text: TextSpan(
-                text: post.caption,
+        //#like share
+        Row(
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    if (!post.liked) {
+                      setState(() {
+                        post.liked = !post.liked;
+                      });
+                    } else {
+                      setState(() {
+                        post.liked = !post.liked;
+                      });
+                    }
+                  },
+                  icon: post.liked
+                      ? Icon(EvaIcons.heart, color: Colors.red)
+                      : Icon(EvaIcons.heartOutline),
+                ),
+                IconButton(onPressed: () {}, icon: Icon(EvaIcons.shareOutline)),
+              ],
+            ),
+          ],
+        ),
+
+        //#caption
+        Container(
+          width: MediaQuery.of(context).size.width,
+          margin: EdgeInsets.only(left: 10, right: 10, bottom: 10),
+          child: RichText(
+            softWrap: true,
+            overflow: TextOverflow.visible,
+            text: TextSpan(
+              text: post.caption,
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

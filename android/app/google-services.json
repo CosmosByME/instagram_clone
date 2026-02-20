@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "342657726836",
+    "project_id": "cosmos-by-me",
+    "storage_bucket": "cosmos-by-me.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:342657726836:android:25874b0d74c3511d575421",
+        "android_client_info": {
+          "package_name": "com.example.instagram_clone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnfvFXOEslHW8Bas6DEqPTQEp-uuXUcww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

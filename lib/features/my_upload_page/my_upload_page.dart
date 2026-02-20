@@ -48,27 +48,21 @@ class _MyUploadPageState extends State<MyUploadPage> {
         return SafeArea(
           child: Wrap(
             children: [
-              Card(
-                color: AppColors.primaryFirst,
-                child: ListTile(
-                  leading: Icon(Icons.image, color: Color(0xFFF56040)),
-                  title: Text("Pick Photo"),
-                  onTap: () {
-                    _pickFromGallery();
-                    Navigator.pop(context);
-                  },
-                ),
+              ListTile(
+                leading: Icon(Icons.image, color: Color(0xFFF56040)),
+                title: Text("Pick Photo"),
+                onTap: () {
+                  _pickFromGallery();
+                  Navigator.pop(context);
+                },
               ),
-              Card(
-                color: AppColors.primarySecond,
-                child: ListTile(
-                  leading: Icon(Icons.camera, color: Color(0xFFFCAF45)),
-                  title: Text("Take Photo"),
-                  onTap: () {
-                    _pickFromCamera();
-                    Navigator.pop(context);
-                  },
-                ),
+              ListTile(
+                leading: Icon(Icons.camera, color: Color(0xFFFCAF45)),
+                title: Text("Take Photo"),
+                onTap: () {
+                  _pickFromCamera();
+                  Navigator.pop(context);
+                },
               ),
               SizedBox(height: 10, width: double.infinity),
             ],
