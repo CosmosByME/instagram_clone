@@ -1,6 +1,6 @@
 class Post {
   String uid = "";
-  String fullname = "UserName";
+  String fullname = "";
   // ignore: non_constant_identifier_names
   String img_user = "";
 
@@ -8,7 +8,7 @@ class Post {
   // ignore: non_constant_identifier_names
   String img_post = "";
   String caption = "";
-  String date = "Feb 19 2026";
+  String date = "";
   bool liked = false;
 
   bool mine = false;

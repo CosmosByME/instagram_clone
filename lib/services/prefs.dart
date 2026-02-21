@@ -18,4 +18,5 @@ class Prefs {
     SharedPreferences pref = await SharedPreferences.getInstance();
     return pref.remove("user_id");
   }
+
 }

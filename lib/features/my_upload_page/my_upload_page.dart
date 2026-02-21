@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:instagram_clone/models/post_model.dart';
+import 'package:instagram_clone/services/data_service.dart';
+import 'package:instagram_clone/services/file_service.dart';
 import 'package:instagram_clone/theme/colors/colors.dart';
 
 class MyUploadPage extends StatefulWidget {
@@ -12,9 +15,55 @@ class MyUploadPage extends StatefulWidget {
 }
 
 class _MyUploadPageState extends State<MyUploadPage> {
+  bool isLoading = false;
   TextEditingController captionController = TextEditingController();
   File? _image;
   final ImagePicker picker = ImagePicker();
+
+  void uploadNewPost() {
+    String caption = captionController.text.trim();
+    if (caption.isEmpty || _image == null) {
+      return;
+    }
+
+    _apiPostImage();
+  }
+
+  void _apiPostImage() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final val = await FileService.uploadPostImage(_image!);
+    respPost(val);
+  }
+
+  void respPost(String imgUrl) {
+    String caption = captionController.text;
+    Post post = Post(caption, imgUrl);
+    apiStoreFeed(post);
+  }
+
+  void apiStoreFeed(Post post) async {
+    Post posted = await DataService.storePost(post);
+
+    DataService.storeFeed(posted).then((val) {
+      _moveToFeed();
+    });
+  }
+
+  void _moveToFeed() {
+    setState(() {
+      isLoading = false;
+    });
+    captionController.text = "";
+    _image = null;
+    widget.pageController.animateToPage(
+      0,
+      duration: Duration(microseconds: 200),
+      curve: Curves.easeIn,
+    );
+  }
 
   void _pickFromGallery() async {
     XFile? image = await picker.pickImage(
@@ -85,7 +134,7 @@ class _MyUploadPageState extends State<MyUploadPage> {
         actions: [
           IconButton(
             onPressed: () {
-              widget.pageController.jumpToPage(0);
+              uploadNewPost();
             },
             icon: Icon(
               Icons.drive_folder_upload,
@@ -135,6 +184,11 @@ class _MyUploadPageState extends State<MyUploadPage> {
                 ),
               ),
             ),
+            isLoading
+                ? Center(
+              child: CircularProgressIndicator(),
+            )
+                : SizedBox.shrink(),
           ],
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:instagram_clone/models/member_model.dart';
+import 'package:instagram_clone/services/data_service.dart';
 
 class MySearchPage extends StatefulWidget {
   const MySearchPage({super.key});
@@ -9,20 +10,59 @@ class MySearchPage extends StatefulWidget {
 }
 
 class _MySearchPageState extends State<MySearchPage> {
+  bool isLoading = false;
   TextEditingController searchController = TextEditingController();
   List<Member> items = [];
+
+  void _apiSearchUsers(String keyword) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final val = await DataService.searchUsers(keyword);
+    _respSearchUsers(val);
+  }
+
+  void _respSearchUsers(List<Member> members) {
+    setState(() {
+      isLoading = false;
+      items = members;
+    });
+  }
+
+  void _apiFollowUser(Member someone) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    await DataService.followMember(someone);
+
+    setState(() {
+      someone.followed = true;
+      isLoading = false;
+    });
+
+    DataService.storePostsToMyFeed(someone);
+  }
+
+  void _apiUnfollowUser(Member someone) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    await DataService.unfollowMember(someone);
+
+    setState(() {
+      someone.followed = false;
+      isLoading = false;
+    });
+
+    DataService.removePostsFromMyFeed(someone);
+  }
 
   @override
   void initState() {
     super.initState();
-    fetchinUser();
-  }
-
-  void fetchinUser() {
-    Future.delayed(Duration(milliseconds: 1200));
-    for (var i = 0; i < 20; i++) {
-      items.add(Member("UserName", "username@gmail.com"));
-    }
   }
 
   @override
@@ -53,7 +93,7 @@ class _MySearchPageState extends State<MySearchPage> {
                   ),
                   child: TextField(
                     onChanged: (value) {
-                      debugPrint(value);
+                      _apiSearchUsers(value);
                     },
                     controller: searchController,
                     decoration: InputDecoration(
@@ -70,34 +110,15 @@ class _MySearchPageState extends State<MySearchPage> {
           SliverList.builder(
             itemCount: items.length,
             itemBuilder: (context, index) {
-              return ItemOfMember(member: items[index]);
+              return _itemOfMember(items[index]);
             },
           ),
         ],
       ),
     );
   }
-}
 
-class ItemOfMember extends StatefulWidget {
-  final Member member;
-  const ItemOfMember({super.key, required this.member});
-
-  @override
-  State<ItemOfMember> createState() => _ItemOfMemberState();
-}
-
-class _ItemOfMemberState extends State<ItemOfMember> {
-  late Member member;
-
-  @override
-  void initState() {
-    super.initState();
-    member = widget.member;
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _itemOfMember(Member member) {
     return Container(
       padding: EdgeInsets.only(top: 2, bottom: 2, left: 10, right: 10),
       height: 90,
@@ -130,17 +151,24 @@ class _ItemOfMemberState extends State<ItemOfMember> {
             ),
           ),
           SizedBox(width: 15),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                member.fullname,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 3),
-              Text(member.email, style: TextStyle()),
-            ],
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.fullname,
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 3),
+                Text(
+                  member.email,
+                  style: TextStyle(),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: Row(
@@ -148,15 +176,9 @@ class _ItemOfMemberState extends State<ItemOfMember> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    if (member.followed) {
-                      setState(() {
-                        member.followed = false;
-                      });
-                    } else {
-                      setState(() {
-                        member.followed = true;
-                      });
-                    }
+                    !member.followed
+                        ? _apiFollowUser(member)
+                        : _apiUnfollowUser(member);
                   },
                   child: Container(
                     width: 100,
@@ -175,8 +197,11 @@ class _ItemOfMemberState extends State<ItemOfMember> {
                     ),
                     child: Center(
                       child: member.followed
-                          ? Text("Following", )
-                          : Text("Follow", style: TextStyle(color: Colors.white),),
+                          ? Text("Following")
+                          : Text(
+                              "Follow",
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ),
                 ),

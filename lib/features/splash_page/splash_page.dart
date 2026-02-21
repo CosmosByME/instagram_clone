@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:instagram_clone/main.dart';
 import 'package:instagram_clone/theme/colors/colors.dart';
 
 class SplashPage extends StatefulWidget {
@@ -9,6 +10,18 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 4), () {
+      if (!mounted) return; // ✅ safety check
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => startPage()),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

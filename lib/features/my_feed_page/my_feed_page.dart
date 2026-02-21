@@ -2,6 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram_clone/models/post_model.dart';
+import 'package:instagram_clone/services/data_service.dart';
+import 'package:instagram_clone/services/utils.dart';
 
 class MyFeedPage extends StatefulWidget {
   final PageController pageController;
@@ -13,46 +15,61 @@ class MyFeedPage extends StatefulWidget {
 
 class _MyFeedPageState extends State<MyFeedPage>
     with AutomaticKeepAliveClientMixin {
+  bool isLoading = false;
   List<Post> items = [];
-  String image1 =
-      "https://gdgouxislhxtvilncrkk.supabase.co/storage/v1/object/sign/images/1.jfif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mZGUxNGQ4MS03ZTY1LTQyOTEtYTJmMi1lMjk2ZTNmNGFkMWMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvMS5qZmlmIiwiaWF0IjoxNzcxNDE5NzE2LCJleHAiOjE3NzIwMjQ1MTZ9.pOzAxQ0MykROV0-n73PEsOeGhnHPMHirNhv4zmZ9pPY";
-
-  String image2 =
-      "https://gdgouxislhxtvilncrkk.supabase.co/storage/v1/object/sign/images/2.jfif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mZGUxNGQ4MS03ZTY1LTQyOTEtYTJmMi1lMjk2ZTNmNGFkMWMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvMi5qZmlmIiwiaWF0IjoxNzcxNDE5NzYxLCJleHAiOjE3NzIwMjQ1NjF9.I-edoncv0cw-NQi5B2Kh2DG5vAZbBhL07q3iVourRNU";
 
   @override
   void initState() {
     super.initState();
-    items.add(Post("Very beautiful sunset", image1));
-    items.add(Post("Beautiful mountains", image2));
+    apiLoadPosts();
+  }
+
+  void apiLoadPosts() async {
+    setState(() {
+      isLoading = true;
+    });
+    final val = await DataService.loadFeeds();
+    resLoadFeed(val);
+  }
+
+  void resLoadFeed(List<Post> list) {
+    setState(() {
+      items = list;
+      isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          "Instagram",
-          style: TextStyle(fontSize: 30, fontFamily: "Billabong"),
-        ),
-
-        actions: [
-          IconButton(
-            onPressed: () {
-              widget.pageController.jumpToPage(2);
-            },
-            icon: Icon(Icons.camera_alt),
+    return RefreshIndicator.adaptive(
+      onRefresh: () async {
+        apiLoadPosts();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          centerTitle: true,
+          title: Text(
+            "Instagram",
+            style: TextStyle(fontSize: 30, fontFamily: "Billabong"),
           ),
-        ],
-      ),
-      body: ListView.builder(
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          return ItemOfPost(post: items[index]);
-        },
+
+          actions: [
+            IconButton(
+              onPressed: () {
+                widget.pageController.jumpToPage(2);
+              },
+              icon: Icon(Icons.camera_alt),
+            ),
+          ],
+        ),
+        body: ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            return ItemOfPost(post: items[items.length - index -1]);
+          },
+        ),
       ),
     );
   }
@@ -124,7 +141,21 @@ class _ItemOfPostState extends State<ItemOfPost> {
                 ],
               ),
               post.mine
-                  ? IconButton(icon: Icon(Icons.more_horiz), onPressed: () {})
+                  ? IconButton(
+                      icon: Icon(Icons.more_horiz),
+                      onPressed: () async {
+                        bool complete = await Utils.dialogCommon(
+                          context,
+                          "Remove",
+                          "Do you want to remove a post?",
+                          false,
+                        );
+
+                        if (complete) {
+                          DataService.removeFeed(post);
+                        }
+                      },
+                    )
                   : SizedBox.shrink(),
             ],
           ),
@@ -146,16 +177,9 @@ class _ItemOfPostState extends State<ItemOfPost> {
             Row(
               children: [
                 IconButton(
-                  onPressed: () {
-                    if (!post.liked) {
-                      setState(() {
-                        post.liked = !post.liked;
-                      });
-                    } else {
-                      setState(() {
-                        post.liked = !post.liked;
-                      });
-                    }
+                  onPressed: () async {
+                    DataService.likePost(post, !post.liked);
+                    setState(() {});
                   },
                   icon: post.liked
                       ? Icon(EvaIcons.heart, color: Colors.red)

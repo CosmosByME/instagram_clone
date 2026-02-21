@@ -5,6 +5,7 @@ import 'package:instagram_clone/features/home/home.dart';
 import 'package:instagram_clone/features/sign_in_page/sign_in_page.dart';
 import 'package:instagram_clone/models/member_model.dart';
 import 'package:instagram_clone/services/auth_service.dart';
+import 'package:instagram_clone/services/data_service.dart';
 import 'package:instagram_clone/services/prefs.dart';
 import 'package:instagram_clone/services/validator.dart';
 import 'package:instagram_clone/theme/colors/colors.dart';
@@ -90,7 +91,7 @@ class _SignUpPageState extends State<SignUpPage> {
       await Prefs.saveUserId(user.uid);
       Member member = Member(name, email);
       member.uid = user.uid;
-      DBService.storeMember(member).then((value) => {});
+      await DataService.storeUser(member);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

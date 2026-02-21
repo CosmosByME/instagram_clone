@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:instagram_clone/features/sign_up_page/sign_up_page.dart';
+import 'package:instagram_clone/models/member_model.dart';
 import 'package:instagram_clone/models/post_model.dart';
 import 'package:instagram_clone/services/auth_service.dart';
+import 'package:instagram_clone/services/data_service.dart';
+import 'package:instagram_clone/services/file_service.dart';
+import 'package:instagram_clone/services/utils.dart';
 
 class MyProfilePage extends StatefulWidget {
   const MyProfilePage({super.key});
@@ -14,28 +16,80 @@ class MyProfilePage extends StatefulWidget {
   State<MyProfilePage> createState() => _MyProfilePageState();
 }
 
-class _MyProfilePageState extends State<MyProfilePage> {
+class _MyProfilePageState extends State<MyProfilePage>
+    with AutomaticKeepAliveClientMixin {
   bool isLoading = false;
   int axisCount = 2;
   List<Post> items = [];
   File? _image;
   // ignore: non_constant_identifier_names
-  String fullname = "userName", email = "username@gmail.com", img_url = "";
+  String fullname = "", email = "", img_url = "";
   // ignore: non_constant_identifier_names
-  int count_posts = 2, count_followers = 154, count_following = 1545;
+  int count_posts = 0, count_followers = 0, count_following = 0;
   final ImagePicker picker = ImagePicker();
 
-  String image1 =
-      "https://gdgouxislhxtvilncrkk.supabase.co/storage/v1/object/sign/images/1.jfif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mZGUxNGQ4MS03ZTY1LTQyOTEtYTJmMi1lMjk2ZTNmNGFkMWMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvMS5qZmlmIiwiaWF0IjoxNzcxNDE5NzE2LCJleHAiOjE3NzIwMjQ1MTZ9.pOzAxQ0MykROV0-n73PEsOeGhnHPMHirNhv4zmZ9pPY";
+  Future<void> _apiLoadMember() async {
+    setState(() {
+      isLoading = true;
+    });
+    final val = await DataService.loadUser();
+    _showMemberInfo(val);
+  }
 
-  String image2 =
-      "https://gdgouxislhxtvilncrkk.supabase.co/storage/v1/object/sign/images/2.jfif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mZGUxNGQ4MS03ZTY1LTQyOTEtYTJmMi1lMjk2ZTNmNGFkMWMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvMi5qZmlmIiwiaWF0IjoxNzcxNDE5NzYxLCJleHAiOjE3NzIwMjQ1NjF9.I-edoncv0cw-NQi5B2Kh2DG5vAZbBhL07q3iVourRNU";
+  void _showMemberInfo(Member member) {
+    setState(() {
+      isLoading = false;
+      fullname = member.fullname;
+      email = member.email;
+      img_url = member.img_url;
+      count_following = member.following_count;
+      count_followers = member.followers_count;
+    });
+  }
+
+  Future<void> _apiUpdateUser(String imageUrl) async {
+    setState(() {
+      isLoading = true;
+    });
+
+    Member member = await DataService.loadUser();
+
+    setState(() {
+      member.img_url = imageUrl;
+    });
+    await DataService.updateUser(member);
+    await _apiLoadMember();
+  }
+
+  Future<void> _apiChangePhoto() async {
+    if (_image == null) return;
+    setState(() => isLoading = true);
+
+    try {
+      final downloadUrl = await FileService.uploadUserImage(_image!);
+      await _apiUpdateUser(downloadUrl);
+    } catch (e) {
+      print("Upload failed: $e");
+      setState(() => isLoading = false);
+    }
+  }
+
+  _apiLoadPosts() {
+    DataService.loadPosts().then((value) => {_resLoadPosts(value)});
+  }
+
+  void _resLoadPosts(List<Post> posts) {
+    setState(() {
+      items = posts;
+      count_posts = posts.length;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    items.add(Post("Very beautiful sunset", image1));
-    items.add(Post("Beautiful mountains", image2));
+    _apiLoadMember();
+    _apiLoadPosts();
   }
 
   void _pickFromGallery() async {
@@ -47,6 +101,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
       setState(() {
         _image = File(image.path);
       });
+      await _apiChangePhoto();
     }
   }
 
@@ -59,6 +114,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
       setState(() {
         _image = File(image.path);
       });
+      await _apiChangePhoto();
     }
   }
 
@@ -96,6 +152,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -105,8 +162,17 @@ class _MyProfilePageState extends State<MyProfilePage> {
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              AuthService.signOut(context);
+            onPressed: () async {
+              bool correct = await Utils.dialogCommon(
+                context,
+                "Log Out",
+                "Are you sure, you want to log out?",
+                false,
+              );
+
+              if(correct) {
+                AuthService.signOut(context);
+              }
             },
             icon: Icon(Icons.exit_to_app),
           ),
@@ -134,7 +200,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadiusGeometry.circular(45),
-                      child: _image == null || _image!.path.isEmpty
+                      child: img_url.isEmpty
                           ? Image.asset(
                               "assets/images/ic_person.png",
                               height: 90,
@@ -142,8 +208,8 @@ class _MyProfilePageState extends State<MyProfilePage> {
                               fit: BoxFit.cover,
                             )
                           //Here I changed image.network to image.file
-                          : Image.file(
-                              _image!,
+                          : Image.network(
+                              img_url,
                               height: 90,
                               width: 90,
                               fit: BoxFit.cover,
@@ -291,14 +357,19 @@ class _MyProfilePageState extends State<MyProfilePage> {
             ),
 
             Expanded(
-              child: GridView.builder(
-                itemCount: items.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: axisCount,
-                ),
-                itemBuilder: (context, index) {
-                  return _itemOfPost(items[index]);
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  _apiLoadPosts();
                 },
+                child: GridView.builder(
+                  itemCount: items.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: axisCount,
+                  ),
+                  itemBuilder: (context, index) {
+                    return _itemOfPost(context, items[index]);
+                  },
+                ),
               ),
             ),
           ],
@@ -306,11 +377,25 @@ class _MyProfilePageState extends State<MyProfilePage> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
-Widget _itemOfPost(Post post) {
+Widget _itemOfPost(BuildContext context, Post post) {
   return GestureDetector(
-    onLongPress: () {},
+    onLongPress: () async {
+      bool complete = await Utils.dialogCommon(
+        context,
+        "Remove",
+        "Do you want to remove a post?",
+        false,
+      );
+
+      if (complete) {
+        DataService.removePost(post);
+      }
+    },
     child: Container(
       margin: EdgeInsets.all(5),
       child: Column(
