@@ -66,12 +66,16 @@ class _MyLikesPageState extends State<MyLikesPage>
             style: TextStyle(fontSize: 30, fontFamily: "Billabong"),
           ),
         ),
-        body: ListView.builder(
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            return _itemOfPost(items[index]);
-          },
-        ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : items.isEmpty
+            ? Center(child: Text("No liked posts yet"))
+            : ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  return _itemOfPost(items[index]);
+                },
+              ),
       ),
     );
   }

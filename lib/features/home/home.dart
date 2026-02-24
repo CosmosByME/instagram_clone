@@ -15,7 +15,19 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> with AutomaticKeepAliveClientMixin<Home> {
   int currentPage = 0;
-  final PageController controller = PageController();
+  late PageController controller;
+  @override
+  void initState() {
+    controller = PageController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);

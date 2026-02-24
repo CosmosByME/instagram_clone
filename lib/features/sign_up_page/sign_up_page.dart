@@ -40,7 +40,7 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  void doAuth() {
+  void doAuth() async {
     String name = _fullNameController.text.trim();
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
@@ -74,12 +74,8 @@ class _SignUpPageState extends State<SignUpPage> {
       isLoading = true;
     });
 
-    AuthService.signUpUser(
-      context,
-      name,
-      email,
-      password,
-    ).then((user) => {_getFirebaseUser(user, name, email)});
+    final user = await AuthService.signUpUser(context, name, email, password);
+    _getFirebaseUser(user, name, email);
   }
 
   void _getFirebaseUser(User? user, name, email) async {

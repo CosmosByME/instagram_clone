@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:instagram_clone/models/member_model.dart';
 import 'package:instagram_clone/services/data_service.dart';
@@ -11,14 +13,24 @@ class MySearchPage extends StatefulWidget {
 
 class _MySearchPageState extends State<MySearchPage> {
   bool isLoading = false;
-  TextEditingController searchController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
   List<Member> items = [];
+  Timer? _debounce;
+
+  // FIX 3: Removed redundant setState; FIX 4: Added 500ms debounce
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (value.trim().isNotEmpty) {
+        _apiSearchUsers(value.trim());
+      } else {
+        setState(() => items = []);
+      }
+    });
+  }
 
   void _apiSearchUsers(String keyword) async {
-    setState(() {
-      isLoading = true;
-    });
-
+    setState(() => isLoading = true);
     final val = await DataService.searchUsers(keyword);
     _respSearchUsers(val);
   }
@@ -31,32 +43,22 @@ class _MySearchPageState extends State<MySearchPage> {
   }
 
   void _apiFollowUser(Member someone) async {
-    setState(() {
-      isLoading = true;
-    });
-
+    setState(() => isLoading = true);
     await DataService.followMember(someone);
-
     setState(() {
-      someone.followed = true;
+      someone.followed = true; // FIX 1: Only set here, not in onTap too
       isLoading = false;
     });
-
     DataService.storePostsToMyFeed(someone);
   }
 
   void _apiUnfollowUser(Member someone) async {
-    setState(() {
-      isLoading = true;
-    });
-
+    setState(() => isLoading = true);
     await DataService.unfollowMember(someone);
-
     setState(() {
-      someone.followed = false;
+      someone.followed = false; // FIX 1: Only set here, not in onTap too
       isLoading = false;
     });
-
     DataService.removePostsFromMyFeed(someone);
   }
 
@@ -66,54 +68,74 @@ class _MySearchPageState extends State<MySearchPage> {
   }
 
   @override
+  void dispose() {
+    _debounce?.cancel();
+    searchController.dispose(); // FIX 2: Properly dispose the controller
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
+        shrinkWrap: true,
         slivers: [
           SliverAppBar(
             stretch: true,
             pinned: true,
             centerTitle: true,
             expandedHeight: 100,
-            title: Text(
+            title: const Text(
               "Search",
               style: TextStyle(fontSize: 30, fontFamily: "Billabong"),
             ),
             bottom: PreferredSize(
-              preferredSize: Size.fromHeight(55),
+              preferredSize: const Size.fromHeight(55),
               child: Padding(
                 padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
                 child: Container(
                   height: 45,
-                  margin: EdgeInsets.only(bottom: 10),
-                  padding: EdgeInsets.only(left: 10, right: 10),
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(left: 10, right: 2),
                   decoration: BoxDecoration(
                     color: Colors.grey.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: TextField(
-                    onChanged: (value) {
-                      _apiSearchUsers(value);
-                      setState(() {});
-                    },
+                    onChanged: _onSearchChanged, // FIX 3 & 4
                     controller: searchController,
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       icon: Icon(Icons.search),
-                      hintText: "Search",
-                      hintStyle: TextStyle(fontSize: 15, color: Colors.grey),
+                      hint: Text(
+                        "Search",
+                        style: TextStyle(fontSize: 19, color: Colors.grey),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.clear),
+                        onPressed: () {
+                          searchController.clear();
+                          _onSearchChanged("");
+                        },
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-          SliverList.builder(
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              return _itemOfMember(items[index]);
-            },
-          ),
+          if (items.isEmpty)
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height / 3 * 2,
+                child: const Center(child: Text("No users found")),
+              ),
+            )
+          else
+            SliverList.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) => _itemOfMember(items[index]),
+            ),
         ],
       ),
     );
@@ -121,23 +143,23 @@ class _MySearchPageState extends State<MySearchPage> {
 
   Widget _itemOfMember(Member member) {
     return Container(
-      padding: EdgeInsets.only(top: 2, bottom: 2, left: 10, right: 10),
+      padding: const EdgeInsets.only(top: 2, bottom: 2, left: 10, right: 10),
       height: 90,
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(2),
+            padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(70),
               border: Border.all(
                 width: 1.5,
-                color: Color.fromRGBO(193, 53, 132, 1),
+                color: const Color.fromRGBO(193, 53, 132, 1),
               ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(22.5),
               child: member.img_url.isEmpty
-                  ? Image(
+                  ? const Image(
                       image: AssetImage("assets/images/ic_person.png"),
                       width: 45,
                       height: 45,
@@ -151,7 +173,7 @@ class _MySearchPageState extends State<MySearchPage> {
                     ),
             ),
           ),
-          SizedBox(width: 15),
+          const SizedBox(width: 15),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -159,15 +181,11 @@ class _MySearchPageState extends State<MySearchPage> {
               children: [
                 Text(
                   member.fullname,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 3),
-                Text(
-                  member.email,
-                  style: TextStyle(),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                const SizedBox(height: 3),
+                Text(member.email, overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -177,12 +195,18 @@ class _MySearchPageState extends State<MySearchPage> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    !member.followed
-                        ? _apiFollowUser(member)
-                        : _apiUnfollowUser(member);
-                    setState(() {
-                      member.followed = !member.followed;
-                    });
+                    // FIX 1: Let the API methods handle state, no setState here
+                    if (!member.followed) {
+                      _apiFollowUser(member);
+                      setState(() {
+                        member.followed = !member.followed;
+                      });
+                    } else {
+                      _apiUnfollowUser(member);
+                      setState(() {
+                        member.followed = !member.followed;
+                      });
+                    }
                   },
                   child: Container(
                     width: 100,
@@ -191,21 +215,19 @@ class _MySearchPageState extends State<MySearchPage> {
                       borderRadius: BorderRadius.circular(3),
                       border: Border.all(
                         width: 1,
-                        color: !member.followed
-                            ? Colors.blueAccent
-                            : Colors.blueGrey,
+                        color: member.followed
+                            ? Colors.blueGrey
+                            : Colors.blueAccent,
                       ),
-                      color: !member.followed
-                          ? Colors.blueAccent
-                          : Colors.blueGrey,
+                      color: member.followed
+                          ? Colors.blueGrey
+                          : Colors.blueAccent,
                     ),
                     child: Center(
-                      child: member.followed
-                          ? Text("Following")
-                          : Text(
-                              "Follow",
-                              style: TextStyle(color: Colors.white),
-                            ),
+                      child: Text(
+                        member.followed ? "Following" : "Follow",
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
                 ),

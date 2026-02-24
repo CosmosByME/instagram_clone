@@ -64,12 +64,32 @@ class _MyFeedPageState extends State<MyFeedPage>
             ),
           ],
         ),
-        body: ListView.builder(
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            return ItemOfPost(post: items[items.length - index -1]);
-          },
-        ),
+        body: isLoading
+            ? ListView(
+                physics: AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+              )
+            : items.isEmpty
+            ? ListView(
+                physics: AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: Center(child: Text("No posts yet")),
+                  ),
+                ],
+              )
+            : ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  return ItemOfPost(post: items[items.length - index - 1]);
+                },
+              ),
       ),
     );
   }

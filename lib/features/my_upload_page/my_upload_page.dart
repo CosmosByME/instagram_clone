@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram_clone/models/post_model.dart';
 import 'package:instagram_clone/services/data_service.dart';
 import 'package:instagram_clone/services/file_service.dart';
+import 'package:instagram_clone/services/utils.dart';
 import 'package:instagram_clone/theme/colors/colors.dart';
 
 class MyUploadPage extends StatefulWidget {
@@ -131,15 +133,39 @@ class _MyUploadPageState extends State<MyUploadPage> {
           "Upload",
           style: TextStyle(fontSize: 30, fontFamily: "Billabong"),
         ),
+        actionsPadding: EdgeInsets.all(8),
         actions: [
-          IconButton(
-            onPressed: () {
-              uploadNewPost();
-            },
-            icon: Icon(
-              Icons.drive_folder_upload,
-              color: AppColors.primarySecond,
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              backgroundColor: AppColors.primarySecond,
+              foregroundColor: Colors.white,
             ),
+            onPressed: () async {
+              if (captionController.text.isEmpty || _image == null) {
+                Fluttertoast.showToast(
+                  msg: "Please fill all the fields",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  textColor: Colors.white,
+                  fontSize: 16.0,
+                );
+                return;
+              }
+              var res = await Utils.dialogCommon(
+                context,
+                "Upload",
+                "Are you sure?",
+                false,
+              );
+              if (res) {
+                uploadNewPost();
+              }
+            },
+            child: Text("Upload"),
           ),
         ],
       ),
@@ -185,9 +211,7 @@ class _MyUploadPageState extends State<MyUploadPage> {
               ),
             ),
             isLoading
-                ? Center(
-              child: CircularProgressIndicator(),
-            )
+                ? Center(child: CircularProgressIndicator())
                 : SizedBox.shrink(),
           ],
         ),
