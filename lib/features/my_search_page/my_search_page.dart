@@ -94,6 +94,7 @@ class _MySearchPageState extends State<MySearchPage> {
                   child: TextField(
                     onChanged: (value) {
                       _apiSearchUsers(value);
+                      setState(() {});
                     },
                     controller: searchController,
                     decoration: InputDecoration(
@@ -179,6 +180,9 @@ class _MySearchPageState extends State<MySearchPage> {
                     !member.followed
                         ? _apiFollowUser(member)
                         : _apiUnfollowUser(member);
+                    setState(() {
+                      member.followed = !member.followed;
+                    });
                   },
                   child: Container(
                     width: 100,

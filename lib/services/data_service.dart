@@ -53,6 +53,7 @@ class DataService {
 
   static Future<List<Member>> searchUsers(String keyword) async {
     List<Member> items = [];
+    final me = await loadUser();
     final firestore = FirebaseFirestore.instance;
     var querySnapshot = await firestore
         .collection("users")
@@ -60,8 +61,22 @@ class DataService {
         .startAt([keyword])
         .get();
 
+    var follow_list = await _firestore
+        .collection(folder_users)
+        .doc(me.uid)
+        .collection(folder_following)
+        .get();
+
+    List<String> maps = follow_list.docs
+        .map((doc) => Member.fromJson(doc.data()).uid)
+        .toList();
+
     for (var item in querySnapshot.docs) {
-      items.add(Member.fromJson(item.data()));
+      var a = Member.fromJson(item.data());
+      if (maps.contains(a.uid)) {
+        a.followed = true;
+      }
+      items.add(a);
     }
 
     return items;
