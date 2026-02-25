@@ -79,25 +79,35 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _getFirebaseUser(User? user, name, email) async {
-    setState(() {
-      isLoading = false;
-    });
-
     if (user != null) {
       await Prefs.saveUserId(user.uid);
       Member member = Member(name, email);
       member.uid = user.uid;
-      await DataService.storeUser(member);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) {
-            return Home();
-          },
-        ),
-      );
+
+      try {
+        await DataService.storeUser(member);
+        debugPrint("✅ User stored in Firestore successfully");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Home()),
+        );
+      } catch (e) {
+        debugPrint("❌ Failed to store user in Firestore: $e");
+        if (mounted) {
+          Fluttertoast.showToast(msg: "Failed to save profile: $e");
+        }
+      }
+
+      // No need to manually navigate — startPage()'s StreamBuilder
+      // already listens to authStateChanges and navigates to Home.
     } else {
       Fluttertoast.showToast(msg: "Check your email or password");
+    }
+
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
